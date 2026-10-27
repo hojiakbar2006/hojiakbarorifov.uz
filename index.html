@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The 404 - Tez kunda</title>
+    <!-- Tailwind CSS for clean layout utilities -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Share Tech Mono & Orbitron for futuristic HUD look -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #ffffff;
+            color: #000000;
+            font-family: 'Share Tech Mono', monospace;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+        .hud-font {
+            font-family: 'Orbitron', sans-serif;
+        }
+        /* Subtle glowing futuristic grid background effect */
+        .bg-grid {
+            background-image: 
+                linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        /* Scanline overlay for high-tech aesthetic */
+        .scanlines {
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0, 0, 0, 0.02) 50%,
+                rgba(0, 0, 0, 0.02)
+            );
+            background-size: 100% 4px;
+        }
+    </style>
+</head>
+<body class="w-screen h-screen flex flex-col justify-between items-center bg-grid relative scanlines">
+
+    <!-- Top Header / Logo -->
+    <header class="w-full pt-8 px-6 md:px-12 flex justify-between items-center z-20">
+        <div class="flex items-center space-x-3">
+            <div class="w-3 h-3 bg-black animate-ping rounded-full"></div>
+            <h1 class="hud-font font-black text-xl md:text-2xl tracking-widest text-black uppercase">
+                The 404
+            </h1>
+        </div>
+        <div class="text-xs uppercase tracking-widest text-gray-500 font-semibold border border-black/20 px-3 py-1 rounded-full bg-black/5">
+            System: Active
+        </div>
+    </header>
+
+    <!-- Center Main Content with JARVIS Hologram Particle Text Effect -->
+    <main class="flex-1 flex flex-col justify-center items-center w-full relative z-10">
+        <div class="relative w-full max-w-4xl h-64 md:h-80 flex justify-center items-center px-4">
+            <!-- Canvas for particle explosion and reassembly -->
+            <canvas id="jarvisCanvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
+            
+            <!-- Fallback text / interactive anchor -->
+            <div id="textContainer" class="text-center z-0 opacity-0 pointer-events-none">
+                <h2 class="hud-font text-4xl md:text-7xl font-bold tracking-wider text-black">Tez kunda...</h2>
+            </div>
+        </div>
+
+        <!-- Futuristic Subtext / Status HUD -->
+        <div class="mt-4 flex flex-col items-center space-y-2 z-20">
+            <div class="flex items-center space-x-2 text-xs md:text-sm tracking-widest text-gray-600">
+                <span class="inline-block w-2 h-2 bg-black rounded-full animate-pulse"></span>
+                <span>INITIALIZING PROTOCOL // ESTABLISHING SECURE NODE</span>
+            </div>
+            <div class="w-48 h-[1px] bg-black/20 my-2"></div>
+        </div>
+    </main>
+
+    <!-- Bottom Footer -->
+    <footer class="w-full pb-6 px-6 text-center z-20">
+        <p class="text-xs md:text-sm uppercase tracking-widest text-gray-600 font-medium">
+            Powered by <span class="text-black font-bold hud-font">Hojiakbar Orifov</span>
+        </p>
+    </footer>
+
+    <!-- JavaScript for JARVIS Particle Assembly / Disassembly Simulation -->
+    <script>
+        const canvas = document.getElementById('jarvisCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let particles = [];
+        let animationStage = 'assemble'; // 'assemble', 'hold', 'disassemble', 'wait'
+        let stageTimer = 0;
+        const textString = "Tez kunda...";
+
+        // Resize canvas to fit display resolution cleanly
+        function resizeCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * window.devicePixelRatio;
+            canvas.height = rect.height * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        }
+
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            initParticles();
+        });
+
+        // Generate pixel targets by drawing text to an offscreen canvas and sampling pixels
+        function getTargetPixels() {
+            const width = canvas.clientWidth;
+            const height = canvas.clientHeight;
+            
+            const offScreenCanvas = document.createElement('canvas');
+            const offCtx = offScreenCanvas.getContext('2d');
+            offScreenCanvas.width = width;
+            offScreenCanvas.height = height;
+
+            // Determine font size responsively
+            const fontSize = Math.min(width / 7, 85);
+            offCtx.font = `900 ${fontSize}px 'Orbitron', sans-serif`;
+            offCtx.fillStyle = '#000000';
+            offCtx.textAlign = 'center';
+            offCtx.textBaseline = 'middle';
+            offCtx.fillText(textString, width / 2, height / 2);
+
+            const imgData = offCtx.getImageData(0, 0, width, height);
+            const pixels = imgData.data;
+            const targets = [];
+
+            // Sample pixels with a step to control particle density
+            const step = width < 640 ? 3 : 4; 
+            for (let y = 0; y < height; y += step) {
+                for (let x = 0; x < width; x += step) {
+                    const index = (y * width + x) * 4;
+                    const alpha = pixels[index + 3];
+                    if (alpha > 128) {
+                        // Add slight jitter for high-tech holographic noise
+                        targets.push({
+                            x: x,
+                            y: y
+                        });
+                    }
+                }
+            }
+            return targets;
+        }
+
+        class Particle {
+            constructor(targetX, targetY) {
+                this.targetX = targetX;
+                this.targetY = targetY;
+                
+                // Start scattered randomly around the canvas (JARVIS hologram source)
+                this.x = Math.random() * canvas.clientWidth;
+                this.y = Math.random() * canvas.clientHeight;
+                
+                // Velocity & acceleration for smooth physics spring effect
+                this.vx = (Math.random() - 0.5) * 20;
+                this.vy = (Math.random() - 0.5) * 20;
+                
+                this.ease = 0.08 + Math.random() * 0.06;
+                this.size = Math.random() * 1.8 + 1.2;
+                
+                // Disassembly angle and speed
+                this.angle = Math.random() * Math.PI * 2;
+                this.disperseSpeed = Math.random() * 8 + 5;
+            }
+
+            update(stage) {
+                if (stage === 'assemble') {
+                    // Pull towards target position with easing
+                    let dx = this.targetX - this.x;
+                    let dy = this.targetY - this.y;
+                    
+                    this.x += dx * this.ease;
+                    this.y += dy * this.ease;
+
+                    // Add slight high-tech jitter when locked in place
+                    if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) {
+                        this.x = this.targetX + (Math.random() - 0.5) * 1.5;
+                        this.y = this.targetY + (Math.random() - 0.5) * 1.5;
+                    }
+                } else if (stage === 'hold') {
+                    // Subtle floating hover effect like energy oscillation
+                    this.x += (Math.sin(Date.now() * 0.005 + this.targetX) * 0.2);
+                    this.y += (Math.cos(Date.now() * 0.005 + this.targetY) * 0.2);
+                } else if (stage === 'disassemble') {
+                    // Explode outward in chaotic particle fragments
+                    if (this.vx === 0 && this.vy === 0) {
+                        this.vx = Math.cos(this.angle) * this.disperseSpeed;
+                        this.vy = Math.sin(this.angle) * this.disperseSpeed;
+                    }
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    this.vx *= 0.95;
+                    this.vy *= 0.95;
+                }
+            }
+
+            draw() {
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(this.x, this.y, this.size, this.size);
+            }
+        }
+
+        let particleList = [];
+
+        function initParticles() {
+            const targets = getTargetPixels();
+            particleList = targets.map(t => new Particle(t.x, t.y));
+        }
+
+        // Main animation loop
+        function animate() {
+            ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+
+            stageTimer++;
+
+            // Manage timeline for loop: Assemble -> Hold -> Disassemble -> Reset
+            if (animationStage === 'assemble' && stageTimer > 120) {
+                animationStage = 'hold';
+                stageTimer = 0;
+            } else if (animationStage === 'hold' && stageTimer > 140) {
+                animationStage = 'disassemble';
+                stageTimer = 0;
+            } else if (animationStage === 'disassemble' && stageTimer > 90) {
+                animationStage = 'assemble';
+                stageTimer = 0;
+                // Re-initialize particles with fresh random start positions for the next loop
+                initParticles();
+            }
+
+            // Update and draw all particles
+            for (let i = 0; i < particleList.length; i++) {
+                particleList[i].update(animationStage);
+                particleList[i].draw();
+            }
+
+            // Draw connective holographic laser vectors occasionally for tech feel
+            if (animationStage === 'assemble' && stageTimer < 60) {
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.03)';
+                ctx.lineWidth = 0.5;
+                ctx.beginPath();
+                for (let i = 0; i < particleList.length; i += 15) {
+                    let p = particleList[i];
+                    ctx.moveTo(p.x, p.y);
+                    ctx.lineTo(canvas.clientWidth / 2, canvas.clientHeight / 2);
+                }
+                ctx.stroke();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        // Initialize on window load
+        window.onload = () => {
+            resizeCanvas();
+            initParticles();
+            animate();
+        };
+    </script>
+</body>
+</html>
